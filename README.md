@@ -1,1 +1,11 @@
-# riscv-ime-gemm-playground
+# Тестирование методов матричного умножения с использованием векторного RVV V1.0 и матричного IME расширений RISC-V
+
+Для запуска тестов есть два файла: 
+- Скрипт подключения sdk `set_spacemit.sh`
+
+Использование: source ./set_spacemit.sh <path_to_spacemit_sdk>
+
+
+- Скрипт компиляции файлов и запуска на эмуляторе qemu:
+
+Использование: ./run <output_binary> source1.[c|s] [source2.[c|s] ...]
