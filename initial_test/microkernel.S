@@ -1,6 +1,6 @@
-.global gemm_microkernel_4x4_int8_int32
+.global gepp_microkernel_4x4_int8_int32
 
-gemm_microkernel_4x4_int8_int32:
+gepp_microkernel_4x4_int8_int32:
     # a0: int32_t*      c,  
     # a1: const int8_t* a,  
     # a2: const int8_t* b,  

@@ -34,7 +34,7 @@ int main() {
     pack_B_Kx4_colmajor(packed_B, (const int8_t*)B, 4, K);
 
     // Вызов ассемблерного ядра
-    gemm_microkernel_4x4_int8_int32((int32_t*)C_asm, packed_A, packed_B, K, 4);
+    gepp_microkernel_4x4_int8_int32((int32_t*)C_asm, packed_A, packed_B, K, 4);
 
     // Вызов наивной реализации для проверки
     naive_gemm_4x4((int32_t*)C_naive, (const int8_t*)A, (const int8_t*)B, K);
