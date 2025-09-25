@@ -1,54 +1,64 @@
 import re
+import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-filename = "/home/artyom/ISPRAS/riscv-ime-gemm-playground/test-1/results.txt"
+def parse_results(filename):
+    data = []
+    with open(filename, "r") as f:
+        lines = f.readlines()
 
-# Списки для данных
-ms_naive, ks_naive, times_naive = [], [], []
-ms_ime, ks_ime, times_ime = [], [], []
+    size, mode = None, None
+    for line in lines:
+        line = line.strip()
+        if line.startswith("Size:"):
+            m = re.findall(r"m=(\d+), n=(\d+), k=(\d+)", line)
+            if m:
+                m, n, k = map(int, m[0])
+                size = (m, n, k)
+        elif line.startswith("Mode:"):
+            mode = line.split(":")[1].strip()
+        elif line.startswith(("Naive", "RVV", "IME")):
+            m = re.match(r"(\w+):\s+([\d\.]+)\s+s\s+\(([\d\.]+)\s+GOPS", line)
+            if m and size:
+                method, time, gops = m.groups()
+                m_, n_, k_ = size
+                data.append({
+                    "m": m_,
+                    "n": n_,
+                    "k": k_,
+                    "mode": mode,
+                    "method": method,
+                    "time": float(time),
+                    "gops": float(gops),
+                })
+    return pd.DataFrame(data)
 
-m, n, k = None, None, None
 
-with open(filename, 'r') as f:
-    for line in f:
-        # Размеры
-        match_size = re.match(r"Size:\s*(\d+)\s+(\d+)\s+(\d+)", line)
-        if match_size:
-            m, n, k = map(int, match_size.groups())
-            continue
+df = parse_results(input())
 
-        # Naive время
-        match_naive = re.match(r"Naive:\s*([\d.eE+-]+)", line)
-        if match_naive and m is not None:
-            times_naive.append(float(match_naive.group(1)))
-            ms_naive.append(m)
-            ks_naive.append(k)
-            continue
+# фильтруем только случаи, где m=n
+df = df[df["m"] == df["n"]]
 
-        # IME время
-        match_ime = re.match(r"IME:\s*([\d.eE+-]+)", line)
-        if match_ime and m is not None:
-            times_ime.append(float(match_ime.group(1)))
-            ms_ime.append(m)
-            ks_ime.append(k)
-            # Сбрасываем после полной тройки
-            m, n, k = None, None, None
+# --- 3D-график ---
+fig = plt.figure(figsize=(10,7))
+ax = fig.add_subplot(111, projection="3d")
 
-# Строим 3D график
-fig = plt.figure(figsize=(12, 8))
-ax = fig.add_subplot(111, projection='3d')
+colors = {"Naive": "red", "RVV": "blue", "IME": "green"}
+markers = {"with_packing": "o", "pre_packed": "^"}
 
-# Naive - красные точки
-ax.scatter(ms_naive, ks_naive, times_naive, c='red', label='Naive', s=50)
-# IME - синие точки
-ax.scatter(ms_ime, ks_ime, times_ime, c='blue', label='IME', s=50)
+for (method, mode), subset in df.groupby(["method", "mode"]):
+    ax.scatter(
+        subset["m"], subset["k"], subset["gops"],
+        c=colors[method],
+        marker=markers[mode],
+        label=f"{method} ({mode})"
+    )
 
-ax.set_xlabel('m')
-ax.set_ylabel('k')
-ax.set_zlabel('time (sec)')
-ax.set_title('GEMM time vs matrix size (m x k)')
+ax.set_xlabel("m = n")
+ax.set_ylabel("k")
+ax.set_zlabel("GOPS")
+ax.set_title("3D график производительности (только m=n)")
 ax.legend()
-
+plt.tight_layout()
 plt.show()
-

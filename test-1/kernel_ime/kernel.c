@@ -1,8 +1,4 @@
 #include "kernel.h"
-#include "microkernel.h"
-#include "../packing/packing.h"
-#include "../extra_funcs/print_matrix.h"
-#include <stdio.h>
 
 #define MAX_VLEN 256
 
@@ -12,7 +8,8 @@ void gemm_int8_int32(
     int8_t *B,
     size_t m,
     size_t n,
-    size_t k)
+    size_t k,
+    bool pre_packed_B)
 {
     
     size_t max_m_n_for_vlen = cbrt(MAX_VLEN);
@@ -34,7 +31,11 @@ void gemm_int8_int32(
     int32_t *C_padded = (int32_t*)malloc(size_packed_C * sizeof(int32_t));
 
     pack_A_4xK(packed_A, A, m, k, kb);
-    pack_B_Kx4(packed_B, B, k, n, kb);
+    if (!pre_packed_B) {
+        pack_B_Kx4(packed_B, B, k, n, kb);
+    } else {
+        memcpy(packed_B, B, size_packed_B * sizeof(int8_t));
+    }
     
     // Выбор подходящего нижлежащего ядра
     gemm_4x4x8_int8_int32(C_padded, packed_A, packed_B, m_pad, n_pad, k_pad);

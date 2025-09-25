@@ -4,7 +4,14 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
 #include <math.h>
+
+#include "microkernel_v.h"
+#include "../packing/packing.h"
+#include "../extra_funcs/print_matrix.h"
 
 void gepp_4x4xk_v(
     const int8_t *A_panel,
@@ -25,7 +32,8 @@ void gemm_int8_int32_v(
     int8_t *B,
     size_t m,
     size_t n,
-    size_t k);
+    size_t k,
+    bool pre_packed_B);
 
 void gepp_4x4x8_int8_int32_v(
     const int8_t *A_panel,
